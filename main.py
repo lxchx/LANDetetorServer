@@ -13,7 +13,8 @@ from config import *
 from tool.common import *
 from tool.scamperApi import *
 
-host = 0
+# 和后台探测服务共享的数据
+host = ''
 flags = {'should_detect': False, 'is_detecting': False}
 detecors = list()
 
@@ -26,8 +27,8 @@ def read_root():
 
 
 @app.get(root_route + "/detector_conn")
-def read_detector_conn(host_ip: int, detector_ip: List[int] = Query(None)):
-    host = host_ip
+def read_detector_conn(host_addr: str, detector_ip: List[int] = Query(None)):
+    host = host_addr
     if detector_ip is not None:
         for ip in detector_ip:
             detecors.append(int_ip(ip))
@@ -80,16 +81,16 @@ def send_to_host(res):
     print(json.dumps(edges))
     try:
         for e in edges:
-            r = requests.post(int_ip(host) + '/api/edge_upload', json=json.dumps(e))
+            r = requests.post(host + '/api/edge_upload', json=json.dumps(e))
     except:
         print('边向管理程序传输失败')
 
 
 @app.get(root_route + "/detect")
 def read_detect(start_flag: int, background_tasks: BackgroundTasks):
-    if start_flag == 1 and not flags['is_detecting']:
+    if start_flag == 1 and not flags['is_detecting']: # 保证单例运行
         flags['should_detect'] = True
-        background_tasks.add_task(detect, flags, detecors, send_to_host)
+        background_tasks.add_task(detect, flags, detecors, send_to_host) #添加后台任务，还有一个结果回调
     elif start_flag == 0:
         flags['should_detect'] = False
     return make_response(None)
