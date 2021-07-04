@@ -37,12 +37,13 @@ def read_detector_conn(host_addr: str, detector_ip: List[int] = Query(None)):
 
 
 @app.get(root_route + "/detector_update")
-def read_detector_update(old: int, new: int):
-    print("old: " + int_ip(old))
-    print("new: " + int_ip(new))
-    if old >= 0:
-        detecors.remove(int_ip(old))
-    detecors.append(int_ip(new))
+def read_detector_update(new: str, old: Optional[str] = None):
+    if old is not None:
+        print("old: " + old)
+    print("new: " + new)
+    if old is not None:
+        detecors.remove(old)
+    detecors.append(new)
     print(detecors)
     return make_response(None)
 
@@ -53,7 +54,7 @@ def send_to_host(res):
     edges = []
     print(json.dumps(res))
     for detect_item in res:
-        tsrc = ip_int(detect_item['src'])
+        tsrc = detect_item['src']
         tstime = detect_item['start']['sec'] * 10**6 + detect_item['start'][
             'usec']
         hops = detect_item['hops']
@@ -61,7 +62,7 @@ def send_to_host(res):
         for hop in hops:
             edge = {}
             edge['from'] = tsrc
-            edge['to'] = ip_int(hop['addr'])
+            edge['to'] = hop['addr']
             edge['ctime'] = hop['tx']['sec']
             edge['delay'] = edge['ctime'] * 10**6 + hop['tx']['usec'] - tstime
             edge['delay'] /= 10**3
@@ -69,12 +70,12 @@ def send_to_host(res):
 
             edges.append(edge)
 
-            tsrc = ip_int(hop['addr'])
+            tsrc = hop['addr']
             tstime = edge['ctime'] * 10**6 + hop['tx']['usec']
 
         edges.append({
             'from': tsrc,
-            'to': ip_int(detect_item['dst']),
+            'to': detect_item['dst'],
             'delay': -1,
             'ctime': int(str(tstime)[:-6])  #截断微秒部分
         })
