@@ -27,11 +27,11 @@ def read_root():
 
 
 @app.get(root_route + "/detector_conn")
-def read_detector_conn(host_addr: str, detector_ip: List[int] = Query(None)):
+def read_detector_conn(host_addr: str, detector_ip: List[str] = Query(None)):
     host = host_addr
     if detector_ip is not None:
         for ip in detector_ip:
-            detecors.append(int_ip(ip))
+            detecors.append(ip)
 
     return make_response(None)
 
@@ -61,8 +61,8 @@ def send_to_host(res):
 
         for hop in hops:
             edge = {}
-            edge['from'] = tsrc
-            edge['to'] = hop['addr']
+            edge['source'] = tsrc
+            edge['target'] = hop['addr']
             edge['ctime'] = hop['tx']['sec']
             edge['delay'] = edge['ctime'] * 10**6 + hop['tx']['usec'] - tstime
             edge['delay'] /= 10**3
@@ -74,32 +74,37 @@ def send_to_host(res):
             tstime = edge['ctime'] * 10**6 + hop['tx']['usec']
 
         edges.append({
-            'from': tsrc,
-            'to': detect_item['dst'],
+            'source': tsrc,
+            'target': detect_item['dst'],
             'delay': -1,
-            'ctime': int(str(tstime)[:-6])  #截断微秒部分
+            'ctime': int(str(tstime)[:-6])  # 截断微秒部分
         })
     print(json.dumps(edges))
-    try:
-        for e in edges:
-            r = requests.post(host + '/api/edge_upload', json=json.dumps(e))
-    except:
-        print('边向管理程序传输失败')
+    tryflag = False
+    print('http://' + host + '/api/result')
+    for e in edges:
+        try:
+            r = requests.post('http://' + host + '/api/result', json=json.dumps(e))
+        except:
+            if not tryflag:
+                print('向管理设备传输边:'+json.dumps(e)+'失败')
+                tryflag = True
 
 
 @app.get(root_route + "/detect")
 def read_detect(start_flag: int, background_tasks: BackgroundTasks):
-    if start_flag == 1 and not flags['is_detecting']: # 保证单例运行
+    if start_flag == 1 and not flags['is_detecting']:  # 保证单例运行
         flags['should_detect'] = True
-        background_tasks.add_task(detect, flags, detecors, send_to_host) #添加后台任务，还有一个结果回调
+        background_tasks.add_task(
+            detect, flags, detecors, send_to_host)  # 添加后台任务，还有一个结果回调
     elif start_flag == 0:
         flags['should_detect'] = False
-    return make_response(None)
+    return {"msg": "通知探测启停成功", "data": None}
 
 
 if __name__ == '__main__':
     uvicorn.run(app='main:app',
-                host="127.0.0.1",
+                host="192.168.3.8",
                 port=8000,
                 reload=True,
                 debug=True)
