@@ -84,10 +84,11 @@ def send_to_host(res):
     print('http://' + host + '/api/result')
     for e in edges:
         try:
-            r = requests.post('http://' + host + '/api/result', json=json.dumps(e))
+            r = requests.post('http://' + host + '/api/result',
+                              json=json.dumps(e))
         except:
             if not tryflag:
-                print('向管理设备传输边:'+json.dumps(e)+'失败')
+                print('向管理设备传输边:' + json.dumps(e) + '失败')
                 tryflag = True
 
 
@@ -95,8 +96,8 @@ def send_to_host(res):
 def read_detect(start_flag: int, background_tasks: BackgroundTasks):
     if start_flag == 1 and not flags['is_detecting']:  # 保证单例运行
         flags['should_detect'] = True
-        background_tasks.add_task(
-            detect, flags, detecors, send_to_host)  # 添加后台任务，还有一个结果回调
+        background_tasks.add_task(detect, flags, detecors,
+                                  send_to_host)  # 添加后台任务，还有一个结果回调
     elif start_flag == 0:
         flags['should_detect'] = False
     return {"msg": "通知探测启停成功", "data": None}
@@ -104,7 +105,7 @@ def read_detect(start_flag: int, background_tasks: BackgroundTasks):
 
 if __name__ == '__main__':
     uvicorn.run(app='main:app',
-                host="192.168.3.8",
+                host="127.0.0.1",
                 port=8000,
                 reload=True,
                 debug=True)
