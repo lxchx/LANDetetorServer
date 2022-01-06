@@ -48,6 +48,15 @@ def read_detector_update(new: str, old: Optional[str] = None):
     return make_response(None)
 
 
+@app.get(root_route + "/add_segment")
+def read_add_segment(segment: str):
+    return "test"
+
+@app.get(root_route + "/del_segment")
+def read_del_segment(segment: str):
+    return "test"
+
+
 # 拿到追踪结果后如何处理
 def send_to_host(res):
     # r = requests.post(int_ip(host) + '/api/edge_upload', json=res)
