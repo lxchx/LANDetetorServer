@@ -35,7 +35,7 @@ def detect(flags, detectors, func):
     sapi = scamperApi()
     ips=list()
     for ip in detectors:
-        if '/' in detectors:
+        if '/' in ip:
             ips.extend(ip_seg_ips(ip))
         else:
             ips.append(ip)

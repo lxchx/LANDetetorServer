@@ -28,6 +28,7 @@ def read_root():
 
 @app.get(root_route + "/detector_conn")
 def read_detector_conn(host_addr: str, detector_ip: List[str] = Query(None)):
+    global host
     host = host_addr
     if detector_ip is not None:
         for ip in detector_ip:
@@ -84,8 +85,9 @@ def send_to_host(res):
     print('http://' + host + '/api/result')
     for e in edges:
         try:
+            data=f"{e['source']},{e['target']},{e['ctime']},{e['delay']}"
             r = requests.post('http://' + host + '/api/result',
-                              json=json.dumps(e))
+                              data=data)
         except:
             if not tryflag:
                 print('向管理设备传输边:' + json.dumps(e) + '失败')
@@ -103,10 +105,9 @@ def read_detect(start_flag: int, background_tasks: BackgroundTasks):
     return {"msg": "通知探测启停成功", "data": None}
 
 
-# if __name__ == '__main__':
-#     uvicorn.run(app='main:app',
-#                 host="127.0.0.1",
-#                 port=8000,
-#                 reload=True,
-#                 debug=True)
-# 
+if __name__ == '__main__':
+    uvicorn.run(app='main:app',
+                host="192.168.3.130",
+                port=8000,
+                reload=True,
+                debug=True)
